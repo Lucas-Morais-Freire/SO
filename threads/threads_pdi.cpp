@@ -2,7 +2,56 @@
 #include <thread>
 #include <opencv2/opencv.hpp>
 
-void gradx (cv::Mat* m, cv::Mat* gx) {
+// essas funcoes calculam as respectivas filtragens.
+void gradx(cv::Mat* m, cv::Mat* gx);
+void grady(cv::Mat* m, cv::Mat* gy);
+
+int main(int argc, const char** argv) {
+
+    // checar se foi passada a quantidade correta de argumentos.
+    if (argc != 2) {
+        std::cout << "quantidade ilegal de argumentos passados. (" << argc - 1 << ")\n";
+        exit(0);
+    }
+    
+    // criar um array para ser codificada a imagem.
+    cv::Mat image;
+    
+    // tentar abrir a imagem.
+    try {
+        image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+    } catch (std::runtime_error err) { // se um erro ocorrer, abortar o programa.
+        std::cerr << err.what() << std::endl;
+        exit(-1);
+    }
+
+    // criar as matrizes que irao conter os gradientes em x, y e o total.
+    cv::Mat gx(image.rows, image.cols, CV_32S);
+    cv::Mat gy(image.rows, image.cols, CV_32S);
+    cv::Mat g(image.rows, image.cols, CV_32S);
+
+    // criar as threads e chamar as funcoes apropriadas para os dois calculos
+    std::thread t1(gradx, &image, &gx), t2(grady, &image, &gy);
+
+    // sincronizar as duas threads com a thread mae.
+    t1.join(); t2.join();
+
+    // somar as duas matrizes
+    g = gx + gy;
+
+    // matriz de saida
+    cv::Mat g_out;
+
+    // converter a matriz de numeros inteiros para matriz de unsigned char com valores de 0 ate 255
+    cv::normalize(g, g_out, 0, 255, cv::NORM_MINMAX, CV_8U);
+
+    // escrever a imagem em um arquivo.
+    cv::imwrite("out.png", g_out);
+
+    return 0;
+}
+
+void gradx(cv::Mat* m, cv::Mat* gx) {
     // cantos:
 
     // caso i = 0 e j = 0:
@@ -96,10 +145,11 @@ void gradx (cv::Mat* m, cv::Mat* gx) {
         }
     }
 
+    // calcula o valor absoluto da imagem
     *gx = cv::abs(*gx);
 }
 
-void grady (cv::Mat* m, cv::Mat* gy) {
+void grady(cv::Mat* m, cv::Mat* gy) {
     // cantos:
 
     // caso i = 0 e j = 0:
@@ -193,50 +243,6 @@ void grady (cv::Mat* m, cv::Mat* gy) {
         }
     }
 
+	// calcula o valor absoluto da imagem
     *gy = cv::abs(*gy);
-}
-
-int main(int argc, const char** argv) {
-
-    // checar se foi passada a quantidade correta de argumentos.
-    if (argc != 2) {
-        std::cout << "quantidade ilegal de argumentos passados. (" << argc - 1 << ")\n";
-        exit(0);
-    }
-    
-    // criar um array para ser codificada a imagem.
-    cv::Mat image;
-    
-    // tentar abrir a imagem.
-    try {
-        image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
-    } catch (std::runtime_error err) { // se um erro ocorrer, abortar o programa.
-        std::cerr << err.what() << std::endl;
-        exit(-1);
-    }
-
-    // criar as matrizes que irao conter os gradientes em x, y e o total.
-    cv::Mat gx(image.rows, image.cols, CV_32S);
-    cv::Mat gy(image.rows, image.cols, CV_32S);
-    cv::Mat g(image.rows, image.cols, CV_32S);
-
-    // criar as threads e chamar as funcoes apropriadas para os dois calculos
-    std::thread t1(gradx, &image, &gx), t2(grady, &image, &gy);
-
-    // sincronizar as duas threads com a thread mae.
-    t1.join(); t2.join();
-
-    // somar as duas matrizes
-    g = gx + gy;
-
-    // matriz de saida
-    cv::Mat g_out;
-
-    // converter a matriz de numeros inteiros para matriz de unsigned char com valores de 0 ate 255
-    cv::normalize(g, g_out, 0, 255, cv::NORM_MINMAX, CV_8U);
-
-    // escrever a imagem em um arquivo.
-    cv::imwrite("out.png", g_out);
-
-    return 0;
 }
