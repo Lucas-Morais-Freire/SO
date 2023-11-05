@@ -26,6 +26,7 @@ void* locker(void* arg) {
     printf("going to sleep\n");
     pthread_mutex_lock(&m);
     printf("woke up\n");
+    pthread_mutex_unlock(&m);
 
     return NULL;
 }
@@ -33,7 +34,7 @@ void* locker(void* arg) {
 int main() {
     pthread_t t1, t2;
     pthread_create(&t1, NULL, locker, NULL);
-    pthread_create(&t2, NULL, locker, NULL);
+    pthread_create(&t2, NULL, unlocker, NULL);
 
     pthread_join(t2, NULL);
     pthread_join(t1, NULL);
