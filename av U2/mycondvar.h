@@ -26,20 +26,20 @@ void condvar_wait(struct condvar* c, pthread_mutex_t* m) {
     // bloquear outras threads de modificar a fila.
     pthread_mutex_lock(&c->operation_mutex);
 
-    // criar um mutex privado para traver esta thread.
+    // criar um mutex privado para travar esta thread.
     struct condvar_node new_node;
     pthread_mutex_init(&new_node.priv_mutex, NULL);
     pthread_mutex_lock(&new_node.priv_mutex);
 
     new_node.prev = NULL; // ele entra em ultimo na fila, entao ele nao tem anterior.
     if (c->back != NULL) {
-        c->back->prev = &new_node; // se ha um noh na traseira da fila, colocar este novo no atras dele.
+        c->back->prev = &new_node; // se ha um no na traseira da fila, colocar este novo no atras dele.
     } else {
-        c->front = &new_node; // se nao ha, colocar o novo noh na frente.
+        c->front = &new_node; // se nao ha, colocar o novo no na frente.
     }
     c->back = &new_node; // o ponteiro da traseira apontara para o novo no em ambos os casos.
 
-    // agora que o novo noh ja esta na fila, permitir que outras threads tentem colocar mais nos ou retira-los.
+    // agora que o novo no ja esta na fila, permitir que outras threads tentem colocar mais nos ou retira-los.
     pthread_mutex_unlock(m);
 
     // permitir edicao da fila

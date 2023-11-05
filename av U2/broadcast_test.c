@@ -6,7 +6,7 @@
 #include <string.h> // strcat 
 #include "mycondvar.h"
 
-#define NUM_REP_WORK 10
+#define NUM_REP_WORK 10 
 #define BUFFER_SIZE 100
 
 pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
@@ -17,7 +17,6 @@ char op_order[BUFFER_SIZE*((NUM_REP_WORK*NUM_REP_WORK + 5*NUM_REP_WORK) >> 1)] =
 void* worker(void* arg) {
     int index = *((int*)arg);
     char buffer[BUFFER_SIZE];
-    sleep(1);
     sprintf(buffer, "worker %d finished work.\n", index);
     
     pthread_mutex_lock(&m);
@@ -59,8 +58,8 @@ int main() {
 
     for (int i = 0; i < NUM_REP_WORK; i++) {
         thread_args[i] = i;
-        pthread_create(&threads[2*i], NULL, worker, (void*)(thread_args + i));
-        pthread_create(&threads[2*i + 1], NULL, reporter, (void*)(thread_args + i));
+        pthread_create(threads + 2*i, NULL, worker, (void*)(thread_args + i));
+        pthread_create(threads + 2*i + 1, NULL, reporter, (void*)(thread_args + i));
     }
 
     for (int i = 0; i < 2*NUM_REP_WORK; i++) {
