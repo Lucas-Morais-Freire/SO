@@ -62,7 +62,7 @@ void condvar_signal(struct condvar* c) {
         struct condvar_node* releasing = c->front;
         // mover a frente da fila para a proxima thread
         c->front = releasing->prev;
-        // se nao houver proxima thread, impedir que c->back aponte para o noh removido.
+        // se nao houver proxima thread, impedir que c->back aponte para o no removido.
 		if (c->front == NULL) {
 			c->back = NULL;
 		}
@@ -71,7 +71,6 @@ void condvar_signal(struct condvar* c) {
     }
 
     pthread_mutex_unlock(&c->operation_mutex);
-
 }
 
 void condvar_broadcast(struct condvar* c) {

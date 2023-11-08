@@ -6,16 +6,16 @@
 #include <string.h> // strcat 
 #include "mycondvar.h"
 
-#define NUM_REP_WORK 10 
+#define NUM_REP_WORK 5
 #define BUFFER_SIZE 100
 
 pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
 struct condvar cv;
-bool* conditions;
+bool conditions[NUM_REP_WORK];
 char op_order[BUFFER_SIZE*((NUM_REP_WORK*NUM_REP_WORK + 5*NUM_REP_WORK) >> 1)] = "";
 
 void* worker(void* arg) {
-    int index = *((int*)arg);
+    int index = (int)arg;
     char buffer[BUFFER_SIZE];
     sprintf(buffer, "worker %d finished work.\n", index);
     
@@ -28,7 +28,7 @@ void* worker(void* arg) {
 }
 
 void* reporter(void* arg) {
-    int index = *((int*)arg);
+    int index = (int)arg;
     char buffer[BUFFER_SIZE];
 
     pthread_mutex_lock(&m);
@@ -49,24 +49,20 @@ int main() {
     pthread_mutex_init(&m, NULL);
     condvar_init(&cv);
     pthread_t threads[2*NUM_REP_WORK];
-    int thread_args[NUM_REP_WORK];
-    conditions = (bool*)malloc(NUM_REP_WORK*sizeof(bool));
 
     for (int i = 0; i < NUM_REP_WORK; i++) {
         conditions[i] = false;
     }
 
     for (int i = 0; i < NUM_REP_WORK; i++) {
-        thread_args[i] = i;
-        pthread_create(threads + 2*i, NULL, worker, (void*)(thread_args + i));
-        pthread_create(threads + 2*i + 1, NULL, reporter, (void*)(thread_args + i));
+        pthread_create(threads + 2*i, NULL, worker, (void*)i);
+        pthread_create(threads + 2*i + 1, NULL, reporter, (void*)i);
     }
 
     for (int i = 0; i < 2*NUM_REP_WORK; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    free(conditions);
     printf(op_order);
 
     return 0;

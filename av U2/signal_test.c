@@ -1,12 +1,12 @@
 #include <stdio.h> // printf/sprintf
 #include <stdlib.h> // malloc
-#include <pthread.h> // multi-threading functions
+#include <pthread.h> // funcoes de multi-threading
 #include <unistd.h> // sleep
 #include <stdbool.h> // bool
 #include <string.h> // strcat 
-#include "mycondvar.h"
+#include "mycondvar.h" // minha implementacao
 
-#define NUM_REPORTERS 10
+#define NUM_REPORTERS 5
 #define BUFFER_SIZE 100
 
 pthread_mutex_t m;
@@ -20,12 +20,11 @@ void* worker(void* arg) {
         // enquanto a condicao for verdadeira, esperar por um reporter torna-la falsa.
         pthread_mutex_lock(&m);
         while (condition) {
-            strcat(op_order, "worker waits for a reporter to be ready.\n");
+            strcat(op_order, "    worker espera por um reporter estar pronto.\n");
             condvar_wait(&reporter_ready, &m);
         }
-        // quando
         condition = true;
-        strcat(op_order, "worker finished work.\n");
+        strcat(op_order, "    worker terminou o trabalho.\n");
         condvar_signal(&worker_ready);
         pthread_mutex_unlock(&m);
     }
@@ -34,19 +33,19 @@ void* worker(void* arg) {
 }
 
 void* reporter(void* arg) {
-    int index = *((int*)arg);
+    int index = (int)arg;
     char buffer[BUFFER_SIZE];
     
     pthread_mutex_lock(&m);
     while(!condition) {
-        sprintf(buffer, "reporter %d waits for worker to be ready.\n", index);
+        sprintf(buffer, "reporter %d espera pelo worker estar pronto.\n", index);
         strcat(op_order, buffer);
         condvar_wait(&worker_ready, &m);
     }
 
     condition = false;
 
-    sprintf(buffer, "reporter %d reports.\n", index);
+    sprintf(buffer, "reporter %d reportou.\n", index);
     strcat(op_order, buffer);
     condvar_signal(&reporter_ready);
 
@@ -60,13 +59,11 @@ int main() {
     condvar_init(&worker_ready);
     condvar_init(&reporter_ready);
     pthread_t threads[NUM_REPORTERS];
-    int thread_args[NUM_REPORTERS];
     pthread_t worker_thread;
 
     pthread_create(&worker_thread, NULL, worker, NULL);
     for (int i = 0; i < NUM_REPORTERS; i++) {
-        thread_args[i] = i;
-        pthread_create(threads + i, NULL, reporter, (void*)(thread_args + i));
+        pthread_create(threads + i, NULL, reporter, (void*)i);
     }
 
     for (int i = 0; i < NUM_REPORTERS; i++) {
